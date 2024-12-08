@@ -49,28 +49,28 @@ def takeCommand():
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print("\nLISTENING FOR THE TRIGGER WORDS....")
-        eel.DisplayMessage("\nLISTENING FOR THE TRIGGER WORDS....")
+        eel.DisplayMessage('LISTENING FOR THE TRIGGER WORDS....')
         r.pause_threshold = 0.8  # Reduced pause threshold for quicker response
         audio = r.listen(source)
         
         try:
             print("RECOGNIZING")
-            eel.DisplayMessage("RECOGNIZING")
+            eel.DisplayMessage('RECOGNIZING')
             query = r.recognize_google(audio, language='en-in')
             print(query)
             eel.DisplayMessage(query)
             if "jarvis" in query.lower():
+                eel.ShowSiri()
                 response_sound()
                 print("\nLISTENING....")
-                eel.DisplayMessage("\nLISTENING....")
+                eel.DisplayMessage('LISTENING....')
                 audio = r.listen(source)
                 try:
                     print("PRE-PROCESSING USER QUERY...")
-                    eel.DisplayMessage("PRE-PROCESSING USER QUERY...")
+                    eel.DisplayMessage('PRE-PROCESSING USER QUERY...')
                     query = r.recognize_google(audio, language='en-in')
                     print(f"User said: {query}\n")
                     eel.DisplayMessage(query)
-                    #speak(query)
                     # Asynchronously save the audio
                     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     file_path = f"data/query_{timestamp}.wav"
@@ -191,7 +191,6 @@ def extract_yt_term(command):
     return match.group(1) if match else None
 @eel.expose
 def main():
-    #eel.DisplayMessage("Hello from Python!")
     user_name = None
     wish(user_name)
     time.sleep(2)
@@ -207,6 +206,7 @@ def main():
                 queries = query.split(".")
             exit_phrases = ["stop", "exit", "quit"]
             BYE_PHRASES = ["good day", "good bye", "bye"]
+            #eel.ShowHood()
             for individual_query in queries:
                 try:
                     if 'play' in individual_query and 'on youtube' in individual_query:
@@ -253,6 +253,8 @@ def main():
                                 speak(result)
                             else:
                                 speak(result)
+                    eel.ShowHood()
                 except Exception as e:
                     print(e)
+                    eel.ShowHood()
                     continue
