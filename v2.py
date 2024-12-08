@@ -12,11 +12,18 @@ import pyautogui
 import re
 import pywhatkit as kit
 import eel
+import sqlite3
+from pipes import quote
+import subprocess
+
 
 # Initialize the speech engine
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
+
+con = sqlite3.connect("jarvis.db")
+cursor = con.cursor()
 
 def speak(text):
     # Function to convert text to speech
@@ -43,6 +50,18 @@ def save_audio_asynchronously(audio, file_path):
     # Function to save audio asynchronously
     with open(file_path, 'wb') as f:
         f.write(audio.get_wav_data())
+
+def remove_words(input_string, words_to_remove):
+    # Split the input string into words
+    words = input_string.split()
+
+    # Remove unwanted words
+    filtered_words = [word for word in words if word.lower() not in words_to_remove]
+
+    # Join the remaining words back into a string
+    result_string = ' '.join(filtered_words)
+
+    return result_string
 
 def takeCommand():
     # Function to listen for commands and process the trigger word
@@ -85,6 +104,23 @@ def takeCommand():
             print(e)
             return None
 
+def whatsapptakeCommand():
+    # Function to listen for commands and process the trigger word
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("\nLISTENING FOR THE TRIGGER WORDS....")
+        eel.DisplayMessage('LISTENING FOR THE TRIGGER WORDS....')
+        r.pause_threshold = 0.8  # Reduced pause threshold for quicker response
+        audio = r.listen(source)
+        
+        print("RECOGNIZING")
+        eel.DisplayMessage('RECOGNIZING')
+        query = r.recognize_google(audio, language='en-in')
+        print(query)
+        eel.DisplayMessage(query)
+        return query.lower()
+
+        
 def speak_time():
     # Function to speak the current time
     current_time = datetime.datetime.now()
@@ -177,6 +213,100 @@ def takeScreenshot():
     screenshot.save(screenshot_file)
     speak("Screen shot saved in the folder. Please check,")
 
+def findContact(query):
+    
+    words_to_remove = ['make', 'a', 'to', 'phone', 'call', 'send', 'message', 'wahtsapp', 'video']
+    query = remove_words(query, words_to_remove)
+
+    try:
+        query = query.strip().lower()
+        cursor.execute("SELECT mobile_no FROM contacts WHERE LOWER(name) LIKE ? OR LOWER(name) LIKE ?", ('%' + query + '%', query + '%'))
+        results = cursor.fetchall()
+        print(results[0][0])
+        mobile_number_str = str(results[0][0])
+
+        if not mobile_number_str.startswith('+91'):
+            mobile_number_str = '+91' + mobile_number_str
+
+        return mobile_number_str, query
+    except:
+        speak('not exist in contacts')
+        return 0, 0
+    
+def whatsApp(mobile_no, message, flag, name):
+    if flag == 'message' and not message.strip():
+        speak("The message cannot be empty. Please try again.")
+        return
+
+    if flag == 'message':
+        target_tab = 17
+        jarvis_message = "Message sent successfully to " + name
+    elif flag == 'call':
+        target_tab = 11
+        message = ''  # Calls don't require a message
+        jarvis_message = "Calling " + name
+    else:
+        target_tab = 10
+        message = ''  # Video calls don't require a message
+        jarvis_message = "Starting video call with " + name
+
+    # Encode the message for URL
+    encoded_message = quote(message)
+    print(f"Encoded message: {encoded_message}")
+    
+    # Construct the WhatsApp URL
+    whatsapp_url = f"whatsapp://send?phone={mobile_no}&text={encoded_message}"
+
+    # Execute the command to open WhatsApp
+    full_command = f'start "" "{whatsapp_url}"'
+    subprocess.run(full_command, shell=True)
+
+    # Perform GUI automation for sending the message or initiating a call
+    time.sleep(5)
+    pyautogui.hotkey('ctrl', 'f')
+    for _ in range(1, target_tab):
+        pyautogui.hotkey('tab')
+    time.sleep(1)
+    pyautogui.press('enter')
+    speak(jarvis_message)
+
+
+def openCommand(query):
+    #query = query.replace(ASSISTANT_NAME, "")
+    query = query.replace("open", "")
+    query.lower()
+
+    app_name = query.strip()
+
+    if app_name != "":
+
+        try:
+            cursor.execute(
+                'SELECT path FROM sys_command WHERE name IN (?)', (app_name,))
+            results = cursor.fetchall()
+
+            if len(results) != 0:
+                speak("Opening "+query)
+                os.startfile(results[0][0])
+
+            elif len(results) == 0: 
+                cursor.execute(
+                'SELECT url FROM web_command WHERE name IN (?)', (app_name,))
+                results = cursor.fetchall()
+                
+                if len(results) != 0:
+                    speak("Opening "+query)
+                    webbrowser.open(results[0][0])
+
+                else:
+                    speak("Opening "+query)
+                    try:
+                        os.system('start '+query)
+                    except:
+                        speak("not found")
+        except:
+            speak("some thing went wrong")
+
 def PlayYoutube(query):
     search_term = extract_yt_term(query)
     speak(f"Playing "+search_term+" on YouTube")
@@ -238,6 +368,32 @@ def main():
                         continue
                     elif 'screenshot' in individual_query:
                         takeScreenshot()
+                    elif 'open' in individual_query:
+                        openCommand(individual_query)
+                    elif "send message" in query or "phone call" in query or "video call" in query:
+                        #from engine.features import findContact, whatsApp, makeCall, sendMessage
+                        contact_no, name = findContact(query)
+                        if(contact_no != 0):
+                            message = ""
+                            if "send message" in query:
+                                message = 'message'
+                                speak("What message should I send?")
+                                query = whatsapptakeCommand()  # Take the actual message from the user
+    
+                                if not query:  # Check if query is None or empty
+                                    speak("I didn't catch that. Please try again.")
+                                    return  # Exit the function or loop to prevent further issues
+    
+                                message_content = query.strip()  # Ensure there's no leading/trailing whitespace
+                                whatsApp(contact_no, message_content, message, name)
+                                        
+                            elif "phone call" in query:
+                                message = 'call'
+                            else:
+                                message = 'video call'
+                                        
+                            whatsApp(contact_no, query, message, name)
+
                     else:
                         if len(individual_query) >= 2:
                             result = queryHandler(individual_query)
