@@ -13,8 +13,13 @@ import re
 import pywhatkit as kit
 import eel
 import sqlite3
-from pipes import quote
+from shlex import quote
 import subprocess
+from pynput.keyboard import Key,Controller
+from time import sleep
+import screen_brightness_control as sbc
+import psutil
+import smtplib
 
 
 # Initialize the speech engine
@@ -312,6 +317,34 @@ def PlayYoutube(query):
     speak(f"Playing "+search_term+" on YouTube")
     kit.playonyt(search_term)
 
+def volumeup():
+    keyboard = Controller()
+    for i in range(10):
+        keyboard.press(Key.media_volume_up)
+        keyboard.release(Key.media_volume_up)
+        sleep(0.1)
+
+def volumedown():
+    for i in range(10):
+        keyboard =Controller()
+        keyboard.press(Key.media_volume_down)
+        keyboard.release(Key.media_volume_down)
+        sleep(0.1)
+
+def increase_brightness(): 
+    current_brightness = sbc.get_brightness 
+    new_brightness = min(100, current_brightness + 20)  
+    sbc.set_brightness(new_brightness)
+    sleep(0.1)
+
+def send_email(to,msg):
+    mail=smtplib.SMTP("smtp.gmail.com",587)
+    mail.echlo
+    mail.login("1da21cs064.cs@drait.edu.in","vxzx lvtz feqf hqek" )
+    mail.sendmail("1da21cs064.cs@drait.edu.in",to,msg)
+    mail.close()
+
+
 def extract_yt_term(command):
     # Define a regular expression pattern to capture the song name
     pattern = r'play\s+(.*?)\s+on\s+youtube'
@@ -358,6 +391,39 @@ def main():
                     elif 'open chat gpt' in individual_query:
                         speak("Opening Chatgpt but you can also use me for your tasks though!...")
                         webbrowser.open('chatgpt.com')
+                    elif 'pause' in query:
+                        pyautogui.press("k")
+                        speak("video paused")
+                    elif 'play' in query:
+                        pyautogui.press("k")
+                        speak("video played")
+                    elif 'mute' in query:
+                        pyautogui.press("m")
+                        speak("video muted")
+                    elif 'unmute' in query:
+                        pyautogui.press("m")
+                        speak("video unmuted")
+                    elif 'volume up' in query:
+                        speak("turning volume up")
+                        volumeup()
+                    elif 'volume down' in query:
+                        speak("turning volume down")
+                        volumedown() 
+                    elif 'increase brightness' in query:
+                        speak("Increasing brightness")
+                        increase_brightness()   
+
+                    
+                    elif 'check system resources' in query:
+                        cpu = psutil.cpu_percent()
+                        memory = psutil.virtual_memory().percent
+                        speak(f"CPU usage is {cpu}% and memory usage is {memory}%")
+
+                    elif 'install package' in query:
+                        package_name = query.replace("install package", "").strip()
+                        os.system(f"pip install {package_name}")
+                        speak(f"Package {package_name} installed successfully")
+
                     elif 'time' in individual_query:
                         speak_time()
                     elif any(keyword in individual_query for keyword in exit_phrases):
