@@ -36,9 +36,16 @@ cursor = con.cursor()
 # con.commit()
 # con.close()
 
-query = 'Anushka'
-query = query.strip().lower()
+cursor.execute('''
+    UPDATE contacts
+    SET name = ?
+    WHERE name = ?;
+''', ('Apple', 'Hita'))
 
-cursor.execute("SELECT mobile_no FROM contacts WHERE LOWER(name) LIKE ? OR LOWER(name) LIKE ?", ('%' + query + '%', query + '%'))
-results = cursor.fetchall()
-print(results[0][0])
+con.commit()
+# query = 'Anushka'
+# query = query.strip().lower()
+
+# cursor.execute("SELECT mobile_no FROM contacts WHERE LOWER(name) LIKE ? OR LOWER(name) LIKE ?", ('%' + query + '%', query + '%'))
+# results = cursor.fetchall()
+# print(results[0][0])

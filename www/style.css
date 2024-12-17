@@ -174,3 +174,50 @@ body{
   
   
   /* Input Filed End*/
+
+  /* Center the entire section */
+#code {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+}
+
+/* Styles for the code box */
+.custom-code-box {
+  position: relative;
+  background-color: #4d4d4d; /* Dark grey background */
+  color: #ffffff; /* White text for contrast */
+  width: 80%; /* 80% of the container width */
+  max-width: 1000px; /* Limit maximum width */
+  height: 500px; /* Large height to fit code */
+  border: 3px solid #333333; /* Even darker grey border */
+  border-radius: 10px; /* Rounded corners */
+  padding: 20px 20px 20px 20px; /* Padding inside the box */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Subtle shadow */
+  overflow-y: auto; /* Enable vertical scrolling for large code */
+  font-family: "Courier New", monospace; /* Code-friendly font */
+  font-size: 16px; /* Adjusted font size */
+}
+
+/* Header Band */
+.code-header {
+  background-color: #333333; /* Even darker grey for contrast */
+  color: #ffffff; /* White text */
+  font-size: 18px; /* Slightly larger font size */
+  font-weight: bold; /* Emphasize header */
+  text-align: center; /* Center the text */
+  padding: 10px; /* Padding for aesthetics */
+  border-radius: 10px 10px 0 0; /* Rounded corners on the top */
+  margin: -20px -20px 20px -20px; /* Overlap and visually connect to the box */
+}
+
+/* For preformatted code text */
+.code-display {
+  white-space: pre-wrap; /* Wrap long lines of code */
+  word-break: break-word; /* Break long words */
+  margin: 0; /* Remove default margin */
+}
+
+
+
